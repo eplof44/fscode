@@ -103,6 +103,11 @@ end
 
 # 4. Investor Profit:
 #     For each Investor and Fund, return net profit or loss on investment.
+
+#sql query to find investor and fund from transactions table
+#iterate through fund and investor list
+#find sums of buy and sells from fund data 
+#print report to terminal
 inv_fund_list = db.execute( "SELECT DISTINCT investor, fund FROM Transactions")
 puts '********************'
 

@@ -1,5 +1,5 @@
 require "sqlite3"
-#require 'csv'
+require 'csv'
 
 db = SQLite3::Database.open ":trades:"
 
@@ -19,6 +19,8 @@ puts 'REPORT ONE'
 #query sales ytd, mtd, qtd, inception for all sales rep_list
 #rescue return 0 if sales come up as 0 to not throw errors
 #display total amounts and print report to terminal
+#create csv from data
+CSV.open('01_Sales_Summary.csv', 'wb') << ['Sales Rep', 'YTD', 'MTD', 'QTD', 'INCEPTION']
 rep_list.each do |rep|
   current_date = DateTime.now
   current_day = current_date.strftime('%d')
@@ -41,16 +43,16 @@ rep_list.each do |rep|
     sales_mtd = 0
   end
 
+    if (current_month == "01" || current_month ==  "02" ||  current_month == "03") then current_qmonth = "01"
 
-  if (current_month == "01" || current_month ==  "02" ||  current_month == "03") then current_qmonth = "01"
+    elsif (current_month == "04" || current_month ==  "05" || current_month ==  "06") then current_qmonth = "04"
 
-  elsif (current_month == "04" || current_month ==  "05" || current_month ==  "06") then current_qmonth = "04"
+    elsif (current_month == "07" || current_month ==  "08" || current_month ==  "09") then current_qmonth = "07"
 
-  elsif (current_month == "07" || current_month ==  "08" || current_month ==  "09") then current_qmonth = "07"
-
-  elsif (current_month == "10" || current_month ==  "11" || current_month ==  "12") then current_qmonth = "10"
+    elsif (current_month == "10" || current_month ==  "11" || current_month ==  "12") then current_qmonth = "10"
 
   end
+
   begin
     sales_qtd = db.execute( "SELECT SUM(shares*price) FROM Transactions
     where type = 'SELL' and rep = ? and date >= " + current_year + "-" + current_qmonth + "-1 and
@@ -60,6 +62,7 @@ rep_list.each do |rep|
     sales_qtd = 0
   end
 
+
   begin
     sales_inception = db.execute( "SELECT SUM(shares*price) FROM Transactions
     where type = 'SELL' and rep = ?
@@ -68,7 +71,9 @@ rep_list.each do |rep|
     sales_inception = 0
 
   end
+  data = [rep[0], sales_ytd[0][0].to_s, sales_mtd[0][0].to_s, sales_qtd[0][0].to_s, sales_inception[0][0].to_s]
   puts "SALES REP: " + rep[0], "YTD: $ " + sales_ytd[0][0].to_s, "MTD: $ " + sales_mtd[0][0].to_s, "QTD: $ " + sales_qtd[0][0].to_s, "INCEPTION: $ " + sales_inception[0][0].to_s
+  CSV.open('01_Sales_Summary.csv', 'ab') << data
 end
 
 
@@ -80,10 +85,12 @@ end
 #sql query to select sales reps and investors from transactions table
 #iterate through array to select the sum from the transations buy/sell per
 #print report to terminal
+#create csv from data
 rep_inv_list = db.execute( "SELECT DISTINCT REP, investor FROM Transactions")
 puts '********************'
 puts 'REPORT TWO'
 
+CSV.open('02_Aum.csv', 'wb') << ['Sales Rep', 'Investor', 'Amount Held']
 rep_inv_list.each do |rep|
   aum_buy = db.execute( "SELECT SUM(shares*price) FROM Transactions
   where type = 'BUY' and rep = ? and investor = ?
@@ -91,7 +98,9 @@ rep_inv_list.each do |rep|
   aum_sell = db.execute( "SELECT SUM(shares*price) FROM Transactions
   where type = 'SELL' and rep = ? and investor = ?
   group by rep, investor", rep[0], rep[1])
+  data = rep[0], rep[1], (aum_buy.join.to_f - aum_sell.join.to_f).to_s
   puts "SALES REP: " + rep[0], "INVESTOR: " + rep[1], "TOTAL AMOUNT HELD: $" + (aum_buy.join.to_f - aum_sell.join.to_f).to_s
+  CSV.open('02_Aum.csv' , 'ab') << data
 end
 
 
@@ -106,12 +115,14 @@ end
 
 #sql query to find investor and fund from transactions table
 #iterate through fund and investor list
-#find sums of buy and sells from fund data 
+#find sums of buy and sells from fund data
 #print report to terminal
+#create csv with the report
 inv_fund_list = db.execute( "SELECT DISTINCT investor, fund FROM Transactions")
 puts '********************'
-
 puts 'REPORT FOUR'
+
+CSV.open('04_Investor_Profit.csv', 'wb') << ['Investor', 'Fund', 'Net']
 inv_fund_list.each do |inv|
   fund_buy = db.execute( "SELECT SUM(shares*price) FROM Transactions
   where type = 'BUY' and investor = ? and fund = ?
@@ -119,5 +130,7 @@ inv_fund_list.each do |inv|
   fund_sell = db.execute( "SELECT SUM(shares*price) FROM Transactions
   where type = 'SELL' and investor = ? and fund = ?
   group by rep, investor", inv[0], inv[1])
+  data = inv[0], inv[1], (fund_sell.join.to_f - fund_buy.join.to_f).to_s
   puts "INVESTOR: " + inv[0], "FUND: " + inv[1], "NET: $" + (fund_sell.join.to_f - fund_buy.join.to_f).to_s
+  CSV.open('04_Investor_Profit.csv' , 'ab') << data
 end

@@ -98,7 +98,7 @@ rep_inv_list.each do |rep|
   aum_sell = db.execute( "SELECT SUM(shares*price) FROM Transactions
   where type = 'SELL' and rep = ? and investor = ?
   group by rep, investor", rep[0], rep[1])
-  data = rep[0], rep[1], (aum_buy.join.to_f - aum_sell.join.to_f).to_s
+  data = [rep[0], rep[1], (aum_buy.join.to_f - aum_sell.join.to_f).to_s]
   puts "SALES REP: " + rep[0], "INVESTOR: " + rep[1], "TOTAL AMOUNT HELD: $" + (aum_buy.join.to_f - aum_sell.join.to_f).to_s
   CSV.open('02_Aum.csv' , 'ab') << data
 end
@@ -130,7 +130,7 @@ inv_fund_list.each do |inv|
   fund_sell = db.execute( "SELECT SUM(shares*price) FROM Transactions
   where type = 'SELL' and investor = ? and fund = ?
   group by rep, investor", inv[0], inv[1])
-  data = inv[0], inv[1], (fund_sell.join.to_f - fund_buy.join.to_f).to_s
+  data = [inv[0], inv[1], (fund_sell.join.to_f - fund_buy.join.to_f).to_s]
   puts "INVESTOR: " + inv[0], "FUND: " + inv[1], "NET: $" + (fund_sell.join.to_f - fund_buy.join.to_f).to_s
   CSV.open('04_Investor_Profit.csv' , 'ab') << data
 end
